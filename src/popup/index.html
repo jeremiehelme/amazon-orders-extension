@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Amazon Factures+</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1 class="title">Amazon Factures+</h1>
+      </header>
+
+      <!-- Initial setup screen (shown only on first visit) -->
+      <div id="setup-screen" class="screen">
+        <div class="setup-form">
+          <div class="form-group">
+            <label for="amazon-domain">Domaine Amazon</label>
+            <select id="amazon-domain" class="select">
+              <option value="amazon.fr">amazon.fr</option>
+              <option value="amazon.com">amazon.com</option>
+              <option value="amazon.de">amazon.de</option>
+              <option value="amazon.co.uk">amazon.co.uk</option>
+              <option value="amazon.it">amazon.it</option>
+              <option value="amazon.es">amazon.es</option>
+              <option value="amazon.nl">amazon.nl</option>
+              <option value="amazon.ca">amazon.ca</option>
+            </select>
+          </div>
+
+          <div class="form-group toggle-group">
+            <label for="auto-sync">Sauvegarde automatique</label>
+            <label class="toggle">
+              <input type="checkbox" id="auto-sync" />
+              <span class="slider round"></span>
+            </label>
+          </div>
+
+          <button id="google-auth" class="button auth-button">
+            <span class="google-icon"></span>Se connecter à Google Drive
+          </button>
+
+          <!-- Drive folder selection (shown after authentication) -->
+          <div id="folder-selection" class="form-group hidden">
+            <label for="drive-folder">Dossier Google Drive</label>
+            <div class="folder-input-group">
+              <select id="drive-folder" class="select">
+                <option value="">Sélectionner un dossier...</option>
+              </select>
+              <button id="create-folder" class="button secondary-button">
+                Nouveau
+              </button>
+            </div>
+          </div>
+
+          <button id="save-config" class="button primary-button" disabled>
+            Enregistrer la configuration
+          </button>
+        </div>
+      </div>
+
+      <!-- Main screen (normal state) -->
+      <div id="main-screen" class="screen hidden">
+        <!-- Status Bar -->
+        <div class="status-bar">
+          <div class="status-item">
+            <span class="status-label">Domaine:</span>
+            <span id="current-domain" class="status-value">amazon.fr</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Drive:</span>
+            <span id="drive-status" class="status-value connected"
+              >Connecté</span
+            >
+          </div>
+        </div>
+
+        <!-- Drive Folder Info -->
+        <div class="folder-info">
+          <span class="folder-label">Dossier:</span>
+          <span id="current-folder" class="folder-value">Mon Dossier</span>
+        </div>
+
+        <!-- Last Sync Info -->
+        <div class="sync-info flex flex-col">
+          <div class="last-sync">
+            <span class="sync-label">Dernière synchronisation:</span>
+            <span id="last-sync-time" class="sync-value">Jamais</span>
+          </div>
+          <button id="sync-now" class="button primary-button">
+            <span class="sync-icon"></span>Synchroniser maintenant
+          </button>
+        </div>
+
+        <!-- Recent Invoices -->
+        <div class="invoices-section">
+          <h2 class="section-title">Factures récentes</h2>
+          <div id="invoices-list" class="invoices-list">
+            <div class="no-invoices">Aucune facture synchronisée</div>
+            <!-- Invoice items will be inserted here by JS -->
+          </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div class="settings-section">
+          <div class="setting-item">
+            <label for="main-auto-sync">Sauvegarde automatique</label>
+            <label class="toggle">
+              <input type="checkbox" id="main-auto-sync" />
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <button id="open-settings" class="button secondary-button">
+            Paramètres
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading overlay -->
+      <div id="loading-overlay" class="overlay hidden">
+        <div class="spinner"></div>
+        <p id="loading-message">Chargement...</p>
+      </div>
+
+      <!-- Settings modal -->
+      <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+          <span id="close-modal" class="close-button">&times;</span>
+          <h2>Paramètres</h2>
+
+          <div class="form-group">
+            <label for="settings-domain">Domaine Amazon</label>
+            <select id="settings-domain" class="select">
+              <option value="amazon.fr">amazon.fr</option>
+              <option value="amazon.com">amazon.com</option>
+              <option value="amazon.de">amazon.de</option>
+              <option value="amazon.co.uk">amazon.co.uk</option>
+              <option value="amazon.it">amazon.it</option>
+              <option value="amazon.es">amazon.es</option>
+              <option value="amazon.nl">amazon.nl</option>
+              <option value="amazon.ca">amazon.ca</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="settings-folder">Dossier Google Drive</label>
+            <div class="folder-input-group">
+              <select id="settings-folder" class="select">
+                <option value="">Chargement...</option>
+              </select>
+              <button
+                id="settings-create-folder"
+                class="button secondary-button"
+              >
+                Nouveau
+              </button>
+            </div>
+          </div>
+
+          <button id="logout-drive" class="button danger-button">
+            Déconnecter Google Drive
+          </button>
+
+          <div class="modal-actions">
+            <button id="save-settings" class="button primary-button">
+              Enregistrer
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- New Folder Modal -->
+      <div id="new-folder-modal" class="modal hidden">
+        <div class="modal-content">
+          <span id="close-folder-modal" class="close-button">&times;</span>
+          <h2>Nouveau dossier</h2>
+
+          <div class="form-group">
+            <label for="folder-name">Nom du dossier</label>
+            <input
+              type="text"
+              id="folder-name"
+              class="input"
+              placeholder="Mon dossier de factures"
+            />
+          </div>
+
+          <div class="modal-actions">
+            <button id="create-folder-submit" class="button primary-button">
+              Créer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
