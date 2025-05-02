@@ -63,6 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Event Listeners for Main Screen
   syncNowButton.addEventListener('click', handleSyncNow);
   openSettingsButton.addEventListener('click', async () => {
+    initializeUI();
     await loadDriveFolders(settingsFolderSelect);
     settingsModal.classList.remove('hidden');
     settingsDomainSelect.value = config.amazonDomain;
@@ -108,48 +109,57 @@ document.addEventListener('DOMContentLoaded', async () => {
         folderSelection.classList.remove('hidden');
         await loadDriveFolders(driveFolderSelect);
       }
-    } else {
-      // Normal state - already configured
-      setupScreen.classList.add('hidden');
-      mainScreen.classList.remove('hidden');
-
-      // Update UI with current config
-      currentDomainSpan.textContent = config.amazonDomain;
-      mainAutoSyncToggle.checked = config.autoSync;
-
-      if (isAuthenticated) {
-        driveStatusSpan.textContent = 'Connecté';
-        driveStatusSpan.classList.add('connected');
-        driveStatusSpan.classList.remove('disconnected');
-
-        // Update folder name
-        if (config.driveFolder.id) {
-          try {
-            const folderInfo = await getFolderInfo(config.driveFolder.id);
-            currentFolderSpan.textContent = folderInfo.name;
-          } catch (error) {
-            console.error('Error getting folder info:', error);
-            currentFolderSpan.textContent = 'Erreur';
-          }
-        }
-      } else {
-        driveStatusSpan.textContent = 'Déconnecté';
-        driveStatusSpan.classList.remove('connected');
-        driveStatusSpan.classList.add('disconnected');
-      }
-
-      // Update last sync time
-      updateLastSyncTime();
-
-      // Load recent invoices
-      await loadRecentInvoices();
+      hideLoading();
+      return;
     }
 
+    // Normal state - already configured
+    setupScreen.classList.add('hidden');
+    mainScreen.classList.remove('hidden');
+
+    // Update UI with current config
+    currentDomainSpan.textContent = config.amazonDomain;
+    mainAutoSyncToggle.checked = config.autoSync;
+
+    if (isAuthenticated) {
+      driveStatusSpan.textContent = 'Connecté';
+      driveStatusSpan.classList.add('connected');
+      driveStatusSpan.classList.remove('disconnected');
+
+      // Update folder name
+      if (config.driveFolder.id) {
+        try {
+          const folderInfo = await getFolderInfo(config.driveFolder.id);
+          currentFolderSpan.textContent = folderInfo.name;
+        } catch (error) {
+          console.error('Error getting folder info:', error);
+          currentFolderSpan.textContent = 'Erreur';
+        }
+      }
+    } else {
+      driveStatusSpan.textContent = 'Déconnecté';
+      driveStatusSpan.classList.remove('connected');
+      driveStatusSpan.classList.add('disconnected');
+    }
+
+    // Update last sync time
+    updateLastSyncTime();
+
+    // Load recent invoices
+    await loadRecentInvoices();
     hideLoading();
+
+
   }
 
   // Load Drive folders into a select element
   async function loadDriveFolders(selectElement) {
+    isAuthenticated = await checkAuthStatus();
+
+    if (!isAuthenticated) {
+      return;
+    }
+
     try {
       const folders = await listDriveFolders();
       // Clear existing options
@@ -206,6 +216,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (success) {
         isAuthenticated = true;
         googleAuthButton.classList.add('hidden');
+        googleAuthSettingsButton.classList.add('hidden');
+        logoutDriveButton.classList.remove('hidden');
+        folderSelectionSettings.classList.remove('hidden');
+        driveStatusSpan.textContent = 'Connecté';
+        driveStatusSpan.classList.add('connected');
+        driveStatusSpan.classList.remove('disconnected');
         folderSelection.classList.remove('hidden');
         await loadDriveFolders(driveFolderSelect);
       } else {
@@ -311,6 +327,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Handle sync now button
   async function handleSyncNow() {
+    try {
+      isAuthenticated = await checkAuthStatus();
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+    }
+
     if (!isAuthenticated) {
       alert('Veuillez vous connecter à Google Drive pour synchroniser les factures.');
       return;
