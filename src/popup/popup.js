@@ -126,6 +126,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       driveStatusSpan.classList.add('connected');
       driveStatusSpan.classList.remove('disconnected');
 
+      googleAuthSettingsButton.classList.add('hidden');
+      folderSelectionSettings.classList.remove('hidden');
+      logoutDriveButton.classList.remove('hidden');
+
       // Update folder name
       if (config.driveFolder.id) {
         try {
@@ -140,6 +144,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       driveStatusSpan.textContent = 'Déconnecté';
       driveStatusSpan.classList.remove('connected');
       driveStatusSpan.classList.add('disconnected');
+      
+      googleAuthSettingsButton.classList.remove('hidden');
+      folderSelectionSettings.classList.add('hidden');
+      logoutDriveButton.classList.add('hidden');
     }
 
     // Update last sync time
@@ -148,7 +156,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load recent invoices
     await loadRecentInvoices();
     hideLoading();
-
 
   }
 
