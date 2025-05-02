@@ -68,8 +68,8 @@ async function handleDailySync() {
   try {
     const config = await loadConfig();
     
-    if (config && config.isConfigured && config.autoSync) {
-      await syncInvoices(config.amazonDomain);
+    if (config && config.isConfigured && config.driveFolder.id && config.autoSync) {
+      await syncInvoices(config.amazonDomain, config.driveFolder.id);
       
       // Update last sync time
       config.lastSync = new Date().toISOString();

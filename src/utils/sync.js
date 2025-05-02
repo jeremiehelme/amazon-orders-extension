@@ -7,7 +7,7 @@ import { saveInvoice, getInvoices, getRecentInvoices } from './storage.js';
  * @param {string} amazonDomain The Amazon domain to sync from
  * @returns {Promise<Object>} Result of the sync operation
  */
-export async function syncInvoices(amazonDomain) {
+export async function syncInvoices(amazonDomain, aFolderId) {
   try {
     // Create notification
     chrome.notifications.create({
@@ -18,7 +18,7 @@ export async function syncInvoices(amazonDomain) {
     });
     
     // Get the Google Drive folder
-    const folderId = await getOrCreateInvoiceFolder();
+    const folderId = await getOrCreateInvoiceFolder(aFolderId);
     
     // Get list of order IDs already synchronized
     const existingInvoices = await getInvoices();

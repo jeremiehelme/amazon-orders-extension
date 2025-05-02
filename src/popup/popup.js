@@ -319,7 +319,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     showLoading('Synchronisation des factures...');
 
     try {
-      const result = await syncInvoices(config.amazonDomain);
+      const result = await syncInvoices(config.amazonDomain, config.driveFolder.id);
       if (result.success) {
         config.lastSync = new Date().toISOString();
         await saveConfig(config);
