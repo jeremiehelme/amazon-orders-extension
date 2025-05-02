@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const loadingMessage = document.getElementById('loading-message');
   const settingsModal = document.getElementById('settings-modal');
   const newFolderModal = document.getElementById('new-folder-modal');
-  
+
   // Setup Screen Elements
   const amazonDomainSelect = document.getElementById('amazon-domain');
   const autoSyncToggle = document.getElementById('auto-sync');
@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const driveFolderSelect = document.getElementById('drive-folder');
   const createFolderButton = document.getElementById('create-folder');
   const saveConfigButton = document.getElementById('save-config');
-  
+
   // Main Screen Elements
   const currentDomainSpan = document.getElementById('current-domain');
   const driveStatusSpan = document.getElementById('drive-status');
@@ -30,15 +30,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   const invoicesList = document.getElementById('invoices-list');
   const mainAutoSyncToggle = document.getElementById('main-auto-sync');
   const openSettingsButton = document.getElementById('open-settings');
-  
+
   // Settings Modal Elements
   const settingsDomainSelect = document.getElementById('settings-domain');
-  const settingsFolderSelect = document.getElementById('settings-folder');
+  const settingsFolderSelect = document.getElementById('settings-drive-folder');
   const settingsCreateFolderButton = document.getElementById('settings-create-folder');
+
+  const folderSelectionSettings = document.getElementById('settings-folder-selection');
+  const googleAuthSettingsButton = document.getElementById('settings-google-auth');
   const logoutDriveButton = document.getElementById('logout-drive');
   const saveSettingsButton = document.getElementById('save-settings');
   const closeModalButton = document.getElementById('close-modal');
-  
+
   // New Folder Modal Elements
   const folderNameInput = document.getElementById('folder-name');
   const createFolderSubmitButton = document.getElementById('create-folder-submit');
@@ -78,6 +81,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentModal = null;
   });
   settingsCreateFolderButton.addEventListener('click', () => showNewFolderModal('settings'));
+  googleAuthSettingsButton.addEventListener('click', handleGoogleAuth);
   logoutDriveButton.addEventListener('click', handleSignOut);
   saveSettingsButton.addEventListener('click', handleSaveSettings);
 
@@ -91,14 +95,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize UI based on configuration
   async function initializeUI() {
     showLoading('Chargement de la configuration...');
-    
+
     isAuthenticated = await checkAuthStatus();
-    
+
     if (!config || !config.isConfigured) {
       // First time setup
       setupScreen.classList.remove('hidden');
       mainScreen.classList.add('hidden');
-      
+
       if (isAuthenticated) {
         googleAuthButton.classList.add('hidden');
         folderSelection.classList.remove('hidden');
@@ -108,16 +112,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Normal state - already configured
       setupScreen.classList.add('hidden');
       mainScreen.classList.remove('hidden');
-      
+
       // Update UI with current config
       currentDomainSpan.textContent = config.amazonDomain;
       mainAutoSyncToggle.checked = config.autoSync;
-      
+
       if (isAuthenticated) {
         driveStatusSpan.textContent = 'Connecté';
         driveStatusSpan.classList.add('connected');
         driveStatusSpan.classList.remove('disconnected');
-        
+
         // Update folder name
         if (config.driveFolder.id) {
           try {
@@ -133,14 +137,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         driveStatusSpan.classList.remove('connected');
         driveStatusSpan.classList.add('disconnected');
       }
-      
+
       // Update last sync time
       updateLastSyncTime();
-      
+
       // Load recent invoices
       await loadRecentInvoices();
     }
-    
+
     hideLoading();
   }
 
@@ -148,10 +152,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function loadDriveFolders(selectElement) {
     try {
       const folders = await listDriveFolders();
-      
       // Clear existing options
       selectElement.innerHTML = '<option value="">Sélectionner un dossier...</option>';
-      
       // Add folder options
       folders.forEach(folder => {
         const option = document.createElement('option');
@@ -159,7 +161,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         option.textContent = folder.name;
         selectElement.appendChild(option);
       });
-      
+
       // Select current folder if set
       if (config.driveFolder.id) {
         selectElement.value = config.driveFolder.id;
@@ -175,15 +177,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     folderNameInput.value = '';
     newFolderModal.classList.remove('hidden');
     folderNameInput.focus();
-    
+
     // Store the context for when we create the folder
     newFolderModal.dataset.context = context;
-    
+
     // Hide the current modal
     if (currentModal) {
       currentModal.classList.add('hidden');
     }
-    
+
     currentModal = newFolderModal;
   }
 
@@ -203,6 +205,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const success = await authenticateWithGoogle();
       if (success) {
         isAuthenticated = true;
+        googleAuthButton.classList.add('hidden');
         folderSelection.classList.remove('hidden');
         await loadDriveFolders(driveFolderSelect);
       } else {
@@ -223,25 +226,25 @@ document.addEventListener('DOMContentLoaded', async () => {
       alert('Veuillez entrer un nom de dossier');
       return;
     }
-    
+
     showLoading('Création du dossier...');
-    
+
     try {
       const folder = await createFolder(folderName);
-      
+
       // Update the appropriate select element based on context
       const context = newFolderModal.dataset.context;
       const selectElement = context === 'setup' ? driveFolderSelect : settingsFolderSelect;
-      
+
       // Add the new folder to the select
       const option = document.createElement('option');
       option.value = folder.id;
       option.textContent = folder.name;
       selectElement.appendChild(option);
-      
+
       // Select the new folder
       selectElement.value = folder.id;
-      
+
       // Hide new folder modal and show previous modal
       newFolderModal.classList.add('hidden');
       if (context === 'settings') {
@@ -250,7 +253,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         currentModal = null;
       }
-      
+
       // Enable save button in setup screen
       if (context === 'setup') {
         saveConfigButton.disabled = false;
@@ -269,17 +272,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       alert('Veuillez vous connecter à Google Drive avant de sauvegarder la configuration.');
       return;
     }
-    
+
     const folderId = driveFolderSelect.value;
     if (!folderId) {
       alert('Veuillez sélectionner un dossier Google Drive.');
       return;
     }
-    
+
     showLoading('Enregistrement de la configuration...');
-    
+
     const folderName = driveFolderSelect.options[driveFolderSelect.selectedIndex].text;
-    
+
     config = {
       isConfigured: true,
       amazonDomain: amazonDomainSelect.value,
@@ -290,19 +293,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         name: folderName
       }
     };
-    
+
     await saveConfig(config);
     updateBackgroundSyncStatus();
-    
+
     // Switch to main screen
     setupScreen.classList.add('hidden');
     mainScreen.classList.remove('hidden');
-    
+
     // Update UI with current config
     currentDomainSpan.textContent = config.amazonDomain;
     currentFolderSpan.textContent = config.driveFolder.name;
     mainAutoSyncToggle.checked = config.autoSync;
-    
+
     hideLoading();
   }
 
@@ -312,9 +315,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       alert('Veuillez vous connecter à Google Drive pour synchroniser les factures.');
       return;
     }
-    
+
     showLoading('Synchronisation des factures...');
-    
+
     try {
       const result = await syncInvoices(config.amazonDomain);
       if (result.success) {
@@ -337,15 +340,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Handle sign out
   async function handleSignOut() {
     showLoading('Déconnexion de Google Drive...');
-    
+
     try {
       await signOut();
       isAuthenticated = false;
-      
+
       driveStatusSpan.textContent = 'Déconnecté';
       driveStatusSpan.classList.remove('connected');
       driveStatusSpan.classList.add('disconnected');
-      
+      logoutDriveButton.classList.add('hidden');
+      folderSelectionSettings.classList.add('hidden');
+      googleAuthSettingsButton.classList.remove('hidden');
       settingsModal.classList.add('hidden');
       currentModal = null;
     } catch (error) {
@@ -359,26 +364,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Handle save settings
   async function handleSaveSettings() {
     showLoading('Mise à jour des paramètres...');
-    
+
     const newDomain = settingsDomainSelect.value;
     const newFolderId = settingsFolderSelect.value;
-    
+
     if (newFolderId && (newDomain !== config.amazonDomain || newFolderId !== config.driveFolder.id)) {
       const folderName = settingsFolderSelect.options[settingsFolderSelect.selectedIndex].text;
-      
+
       config.amazonDomain = newDomain;
       config.driveFolder = {
         id: newFolderId,
         name: folderName
       };
-      
+
       await saveConfig(config);
-      
+
       // Update UI
       currentDomainSpan.textContent = config.amazonDomain;
       currentFolderSpan.textContent = config.driveFolder.name;
     }
-    
+
     settingsModal.classList.add('hidden');
     currentModal = null;
     hideLoading();
@@ -399,13 +404,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!isAuthenticated) {
       return;
     }
-    
+
     try {
       const invoices = await getMostRecentInvoices(5);
-      
+
       // Clear current list
       invoicesList.innerHTML = '';
-      
+
       if (invoices.length === 0) {
         const noInvoicesDiv = document.createElement('div');
         noInvoicesDiv.className = 'no-invoices';
@@ -416,28 +421,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         invoices.forEach(invoice => {
           const invoiceItem = document.createElement('div');
           invoiceItem.className = 'invoice-item';
-          
+
           const details = document.createElement('div');
           details.className = 'invoice-details';
-          
+
           const date = document.createElement('span');
           date.className = 'invoice-date';
           date.textContent = formatDate(new Date(invoice.date));
-          
+
           const amount = document.createElement('span');
           amount.className = 'invoice-amount';
           amount.textContent = invoice.amount;
-          
+
           details.appendChild(date);
           details.appendChild(amount);
-          
+
           const status = document.createElement('span');
           status.className = `invoice-status status-${invoice.status.toLowerCase()}`;
           status.textContent = getStatusText(invoice.status);
-          
+
           invoiceItem.appendChild(details);
           invoiceItem.appendChild(status);
-          
+
           invoicesList.appendChild(invoiceItem);
         });
       }
