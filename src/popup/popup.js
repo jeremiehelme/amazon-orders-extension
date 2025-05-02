@@ -100,6 +100,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       mainScreen.classList.add('hidden');
       
       if (isAuthenticated) {
+        googleAuthButton.classList.add('hidden');
         folderSelection.classList.remove('hidden');
         await loadDriveFolders(driveFolderSelect);
       }

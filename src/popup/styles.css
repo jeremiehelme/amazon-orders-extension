@@ -41,6 +41,34 @@ body {
   display: none !important;
 }
 
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-space-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-space-around {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
 /* Header Styles */
 header {
   background-color: var(--amazon-blue);
@@ -119,11 +147,14 @@ header {
 
 .folder-input-group .select {
   flex: 1;
+  flex-shrink: 0;
 }
 
 .folder-input-group .button {
   margin: 0;
   padding: 8px 12px;
+  flex-grow: 0;
+  width: 30px;
 }
 
 /* Toggle Switch */
@@ -147,7 +178,7 @@ header {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--text-light);
+  background-color: var(--border-light);
   transition: var(--transition-speed);
 }
 
@@ -170,15 +201,15 @@ header {
   transition: var(--transition-speed);
 }
 
-input:checked + .slider {
+input:checked+.slider {
   background-color: var(--amazon-blue);
 }
 
-input:focus + .slider {
+input:focus+.slider {
   box-shadow: 0 0 1px var(--amazon-blue);
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
   transform: translateX(20px);
 }
 
@@ -315,7 +346,11 @@ input:checked + .slider:before {
 
 .last-sync {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  width: 100%;
+  column-gap: 10px;
+  align-items: center;
+  margin-bottom: 5px;
 }
 
 .sync-label {
@@ -329,7 +364,7 @@ input:checked + .slider:before {
 
 #sync-now {
   flex-shrink: 0;
-  width: auto;
+  width: 100%;
   margin-bottom: 0;
 }
 
@@ -407,10 +442,12 @@ input:checked + .slider:before {
 /* Settings Section */
 .settings-section {
   display: flex;
+  flex-flow: column;
   align-items: center;
   justify-content: space-between;
   padding-top: 12px;
   border-top: 1px solid var(--border-light);
+  row-gap: 12px;
 }
 
 .setting-item {
@@ -451,8 +488,13 @@ input:checked + .slider:before {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 #loading-message {
@@ -526,8 +568,13 @@ input:checked + .slider:before {
 
 /* Animation Effects */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .screen {
