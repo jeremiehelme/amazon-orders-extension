@@ -12,7 +12,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     handleSyncSettingsUpdate(message.autoSync);
     sendResponse({ success: true });
   }
-  
+
   // Return true to indicate we'll respond asynchronously
   return true;
 });
@@ -30,7 +30,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 async function setupAlarms() {
   try {
     const config = await loadConfig();
-    
+
     if (config && config.isConfigured && config.autoSync) {
       // Create an alarm that triggers once per day
       chrome.alarms.create('dailySync', {
@@ -67,17 +67,17 @@ function handleSyncSettingsUpdate(autoSync) {
 async function handleDailySync() {
   try {
     const config = await loadConfig();
-    
+
     if (config && config.isConfigured && config.driveFolder.id && config.autoSync) {
       await syncInvoices(config.amazonDomain, config.driveFolder.id);
-      
+
       // Update last sync time
       config.lastSync = new Date().toISOString();
       chrome.storage.sync.set({ config });
     }
   } catch (error) {
     console.error('Error during daily sync:', error);
-    
+
     // Create error notification
     chrome.notifications.create({
       type: 'basic',

@@ -34,6 +34,19 @@
     "service_worker": "src/background/service-worker.js",
     "type": "module"
   },
+  "content_scripts": [
+    {
+      "matches": ["*://*.amazon.com/*",
+    "*://*.amazon.fr/*",
+    "*://*.amazon.de/*",
+    "*://*.amazon.co.uk/*",
+    "*://*.amazon.it/*",
+    "*://*.amazon.es/*",
+    "*://*.amazon.nl/*",
+    "*://*.amazon.ca/*"],
+      "js": ["src/content/content.js"]
+    }
+  ],
   "oauth2": {
     "client_id": "543215135439-smfi4o1pitk94djfma1svptuuf0h7ubf.apps.googleusercontent.com",
     "scopes": [

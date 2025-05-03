@@ -50,7 +50,7 @@ export async function saveInvoice(invoice) {
   return new Promise((resolve, reject) => {
     chrome.storage.local.get('invoices', (data) => {
       let invoices = data.invoices || [];
-      
+
       // Check if invoice already exists
       const existingIndex = invoices.findIndex(i => i.id === invoice.id);
       if (existingIndex !== -1) {
@@ -68,10 +68,10 @@ export async function saveInvoice(invoice) {
           updatedAt: new Date().toISOString()
         });
       }
-      
+
       // Sort by date, newest first
       invoices.sort((a, b) => new Date(b.date) - new Date(a.date));
-      
+
       // Save to storage
       chrome.storage.local.set({ invoices }, () => {
         if (chrome.runtime.lastError) {
@@ -92,6 +92,19 @@ export async function getInvoices() {
   return new Promise((resolve) => {
     chrome.storage.local.get('invoices', (data) => {
       resolve(data.invoices || []);
+    });
+  });
+}
+
+
+/**
+ * delete all invoices from Chrome storage
+ * @returns {Promise<Boolean>} the success of the operation
+ */
+export async function removeInvoices() {
+  return new Promise((resolve) => {
+    chrome.storage.local.remove('invoices', (data) => {
+      resolve(true);
     });
   });
 }
