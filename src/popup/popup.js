@@ -456,7 +456,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           const date = document.createElement('span');
           date.className = 'invoice-date';
-          date.textContent = formatDate(new Date(invoice.date));
+          console.log('Invoice date:', invoice.date);
+          date.textContent = invoice.date;
 
           const amount = document.createElement('span');
           amount.className = 'invoice-amount';
@@ -478,11 +479,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
       console.error('Error loading invoices:', error);
     }
-  }
-
-  // Format date for display
-  function formatDate(date) {
-    return date.toLocaleDateString('fr-FR');
   }
 
   // Format date and time for display

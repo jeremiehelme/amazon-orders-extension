@@ -1,6 +1,7 @@
-import { extractInvoiceData, extractPdfUrl, isInvoicePage } from './amazon-parser.js';
 import { getOrCreateInvoiceFolder, uploadPdfToFolder, fetchPdfFromUrl } from './drive-api.js';
 import { saveInvoice, getInvoices, getRecentInvoices, removeInvoices } from './storage.js';
+import { parseDateFlexibly } from './date-parser.js';
+import { format } from 'date-fns';
 
 /**
  * Synchronizes invoices from Amazon to Google Drive
@@ -20,6 +21,8 @@ export async function syncInvoices(amazonDomain, aFolderId) {
     // Get the Google Drive folder
     const folderId = await getOrCreateInvoiceFolder(aFolderId);
 
+    await removeInvoices();
+
     // Get list of order IDs already synchronized
     const existingInvoices = await getInvoices();
     const existingOrderIds = new Set(existingInvoices.map(invoice => invoice.id));
@@ -33,17 +36,10 @@ export async function syncInvoices(amazonDomain, aFolderId) {
         // Get the PDF URL if available
         if (order.invoiceUrl) {
           try {
-            // Fetch the invoice page to get the PDF URL
-            const invoicePageResponse = await fetch(order.invoiceUrl);
-            const invoicePageText = await invoicePageResponse.text();
-            const parser = new DOMParser();
-            const invoiceDoc = parser.parseFromString(invoicePageText, 'text/html');
 
-            const pdfUrl = extractPdfUrl(invoiceDoc);
-
-            if (pdfUrl) {
+            if (order.invoiceUrl) {
               // Download the PDF
-              const pdfBlob = await fetchPdfFromUrl(pdfUrl);
+              const pdfBlob = await fetchPdfFromUrl(order.invoiceUrl);
 
               // Generate a filename
               const fileName = `Facture_Amazon_${order.id}.pdf`;
@@ -134,32 +130,38 @@ async function getAmazonOrders(domain) {
 
       // Listen for invoice updates from background script
       chrome.runtime.onMessage.addListener((message) => {
-        console.log('Message received:', message);
         if (message.type === 'FOUND_INVOICES') {
-          console.log('Invoices found:', message.invoices);
 
-          const orders = message.invoices.map(order => ({
-            id: order.invoiceId,
-            date: order.date ? order.date.toISOString() : new Date().toISOString(),
-            amount: order.amount || 'N/A',
-            status: order.status || 'Pending',
-            invoiceUrl: order.url || null,
-            items: order.items || []
-          }));
 
           chrome.tabs.remove(tabId); // Close the tab after processing
+
+
+          const orders = message.invoices.map(order => {
+            let orderDate = parseDateFlexibly(order.date);
+            if (orderDate === null) {
+              orderDate = new Date();
+            }
+            return {
+              id: order.invoiceId,
+              date: format(orderDate, 'dd/MM/yyyy'),
+              amount: order.amount || 'N/A',
+              status: order.status || 'Pending',
+              invoiceUrl: order.url || null,
+              items: order.items || []
+            }
+          });
+
           return resolve(orders);
         }
       });
 
       //open chrome tab instead of fetch
       const tab = await chrome.tabs.create({ url: ordersUrl, active: false });
-      tabId = tab.id; console.log('Tab opened:', tabId);
+      tabId = tab.id;
 
     } catch (error) {
       console.error('Error getting Amazon orders:', error);
       return resolve([]);
-      return [];
     }
   });
 

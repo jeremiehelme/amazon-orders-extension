@@ -4,21 +4,21 @@ console.log('Amazon Factures+ content script loaded');
 async function extractInvoiceUrls() {
 
 
+    const orderBlocks = document.querySelectorAll(".order-card__list");
 
-    // Find all invoice buttons
-    const invoiceButtons = document.querySelectorAll(".order-header__header-link-list-item span[data-action='a-popover'] a");
     const invoices = [];
-    console.log(invoiceButtons);
-    // Click each button and extract invoice links
-    for (const button of invoiceButtons) {
+    for (const orderBlock of orderBlocks) {
+        const orderDate = orderBlock.querySelector(".order-header .a-fixed-right-grid-col.a-col-left .a-column.a-span4 .a-size-base.a-color-secondary.aok-break-word")?.innerHTML;
+        const invoiceId = orderBlock.querySelector(".order-header .yohtmlc-order-id .a-color-secondary:last-child")?.innerHTML;
+
+        // Find the invoice button
+        const invoiceButton = orderBlock.querySelector(".order-header__header-link-list-item span[data-action='a-popover'] a");
         // Create a promise that resolves when the popup appears
         const popupPromise = new Promise(resolve => {
             const popupObserver = new MutationObserver((mutations, observer) => {
                 for (const mutation of mutations) {
                     for (const node of mutation.addedNodes) {
-                        console.log("found node", node);
                         if (node.nodeType === 1 && node.classList.contains('a-popover')) {
-                            console.log("found popup", node);
                             observer.disconnect();
                             resolve(node);
                             return;
@@ -33,63 +33,77 @@ async function extractInvoiceUrls() {
             });
         });
 
-        // Click the button to open popup
-        const intervalId = setInterval(button.click(), 1000);
+
+
+        // Click each button and extract invoice links
+        const intervalId = setInterval(() => {
+            const clickEvent = new MouseEvent('click', {
+                view: window,
+                bubbles: true,
+                cancelable: true
+            });
+            invoiceButton.dispatchEvent(clickEvent);
+        }, 1000);
+
         const popoverList = await popupPromise;
         clearInterval(intervalId);
-        if (popoverList) {
-            const invoiceListPromise = new Promise(resolve => {
-                const popupObserver = new MutationObserver((mutations, observer) => {
-                    for (const mutation of mutations) {
-                        for (const node of mutation.addedNodes) {
-                            if (node.nodeType === 1 && node.classList.contains('invoice-list')) {
-                                observer.disconnect();
-                                resolve(node);
-                                return;
-                            }
+
+        if (!popoverList) {
+            resolve(null);
+        }
+
+        const invoiceListPromise = new Promise(resolve => {
+            const popupObserver = new MutationObserver((mutations, observer) => {
+                for (const mutation of mutations) {
+                    for (const node of mutation.addedNodes) {
+                        if (node.nodeType === 1 && node.classList.contains('invoice-list')) {
+                            observer.disconnect();
+                            resolve(node);
+                            return;
                         }
                     }
-                });
-
-                popupObserver.observe(popoverList, {
-                    childList: true,
-                    subtree: true
-                });
+                }
+                resolve(null);
             });
 
-            const invoiceList = await invoiceListPromise;
-            // Find all links in the invoice list
+            popupObserver.observe(popoverList, {
+                childList: true,
+                subtree: true
+            });
+        });
 
-            console.log('invoiceList', invoiceList);
-            for (const link of invoiceList.querySelectorAll('a')) {
-                if (link.innerHTML.includes('Facture')) {
+        const invoiceList = await invoiceListPromise;
+        if (!invoiceList) {
+            console.error('Invoice list not found');
+            resolve(null);
+        }
+        // Find all links in the invoice list
+        for (const link of invoiceList.querySelectorAll('a')) {
+            if (link.innerHTML.includes('Facture')) {
 
-                    const invoiceId = getInvoiceIdFromUrl(link.href);
-                    const orderDate = button.closest('.order-header')?.querySelector('.order-date')?.textContent.trim() || '';
-
-                    invoices.push({
-                        url: link.href,
-                        text: `Invoice ${invoiceId} - ${orderDate}`,
-                        invoiceId: invoiceId
-                    });
-                    console.log('invoices', invoices);
-                    // Close popup by clicking outside
-                    document.body.click();
-                    break;
-                }
+                invoices.push({
+                    url: link.href,
+                    text: `Invoice ${invoiceId} - ${orderDate}`,
+                    invoiceId: invoiceId,
+                    date: orderDate
+                });
+                // Close popup by clicking outside
+                document.body.click();
+                break;
             }
         }
+
 
         // Small delay to ensure popup is fully closed
         await new Promise(resolve => setTimeout(resolve, 100));
     }
 
-    if (invoices.length > 0) {
-        chrome.runtime.sendMessage({
-            type: 'FOUND_INVOICES',
-            invoices: invoices
-        });
-    }
+
+    chrome.runtime.sendMessage({
+        type: 'FOUND_INVOICES',
+        invoices: invoices
+    });
+
 }
 
 
@@ -110,7 +124,6 @@ const observer = new MutationObserver((mutations) => {
             const newOrders = Array.from(mutation.addedNodes).filter(node => node.nodeType === 1 && node.classList.contains(".order-card__list"));
             if (newOrders.length > 0) {
                 hasNewOrders = true;
-                console.log('New orders detected:', newOrders);
             }
         }
     });
@@ -133,7 +146,6 @@ function getInvoiceIdFromUrl(url) {
         return null;
     }
     const invoiceIdPart = urlParts[urlParts.length - 2];
-    console.log('invoiceIdPart', invoiceIdPart);
 
     return invoiceIdPart || null;
 
