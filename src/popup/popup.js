@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const driveStatusSpan = document.getElementById('drive-status');
   const currentFolderSpan = document.getElementById('current-folder');
   const lastSyncTimeSpan = document.getElementById('last-sync-time');
+  const years = document.getElementById('years');
   const syncNowButton = document.getElementById('sync-now');
   const invoicesList = document.getElementById('invoices-list');
   const mainAutoSyncToggle = document.getElementById('main-auto-sync');
@@ -113,6 +114,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    fillYearSelect(years);
+
     // Normal state - already configured
     setupScreen.classList.add('hidden');
     mainScreen.classList.remove('hidden');
@@ -144,7 +147,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       driveStatusSpan.textContent = 'Déconnecté';
       driveStatusSpan.classList.remove('connected');
       driveStatusSpan.classList.add('disconnected');
-      
+
       googleAuthSettingsButton.classList.remove('hidden');
       folderSelectionSettings.classList.add('hidden');
       logoutDriveButton.classList.add('hidden');
@@ -187,6 +190,31 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.error('Error loading folders:', error);
       alert('Erreur lors du chargement des dossiers');
     }
+  }
+
+  function fillYearSelect(selectElement) {
+    // Check if the select element is valid
+    if (!selectElement || !(selectElement instanceof HTMLSelectElement)) {
+      console.error('Invalid select element provided');
+      return;
+    }
+    // Clear any existing options
+    selectElement.innerHTML = '';
+
+    // Set start year and get current year
+    const startYear = 2014;
+    const currentYear = new Date().getFullYear();
+
+    // Loop through years and add options
+    for (let year = startYear; year <= currentYear; year++) {
+      const option = document.createElement('option');
+      option.value = year;
+      option.textContent = year;
+      selectElement.appendChild(option);
+    }
+
+    // Optional: Set the current year as the default selected option
+    selectElement.value = currentYear;
   }
 
   // Show new folder modal
@@ -348,7 +376,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     showLoading('Synchronisation des factures...');
 
     try {
-      const result = await syncInvoices(config.amazonDomain, config.driveFolder.id);
+      const year = years.value;
+      const result = await syncInvoices(config.amazonDomain, config.driveFolder.id, year);
       if (result.success) {
         config.lastSync = new Date().toISOString();
         await saveConfig(config);

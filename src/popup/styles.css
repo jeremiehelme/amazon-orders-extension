@@ -368,6 +368,20 @@ input:checked+.slider:before {
   margin-bottom: 0;
 }
 
+.year-selection {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  column-gap: 10px;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+
+#years {
+  width: 90px;
+}
+
 /* Invoices Section */
 .invoices-section {
   margin-bottom: 16px;

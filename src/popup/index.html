@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Amazon Factures+</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
   <div class="container">
     <header>
@@ -85,6 +87,10 @@
         <div class="last-sync">
           <span class="sync-label">Dernière synchro :</span>
           <span id="last-sync-time" class="sync-value">Jamais</span>
+        </div>
+        <div class="year-selection">
+          <label for="years" class="year-label">Sélectionner l'année :</label>
+          <select id="years" class="select"></select>
         </div>
         <button id="sync-now" class="button primary-button">
           <span class="sync-icon"></span>Synchroniser maintenant
@@ -192,4 +198,5 @@
   </div>
   <script type="module" src="popup.js"></script>
 </body>
+
 </html>

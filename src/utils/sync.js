@@ -8,7 +8,7 @@ import { format } from 'date-fns';
  * @param {string} amazonDomain The Amazon domain to sync from
  * @returns {Promise<Object>} Result of the sync operation
  */
-export async function syncInvoices(amazonDomain, aFolderId) {
+export async function syncInvoices(amazonDomain, aFolderId, year) {
   try {
     // Create notification
     chrome.notifications.create({
@@ -21,13 +21,13 @@ export async function syncInvoices(amazonDomain, aFolderId) {
     // Get the Google Drive folder
     const folderId = await getOrCreateInvoiceFolder(aFolderId);
 
-    await removeInvoices();
+    //await removeInvoices();
 
     // Get list of order IDs already synchronized
     const existingInvoices = await getInvoices();
     const existingOrderIds = new Set(existingInvoices.map(invoice => invoice.id));
     // Get Amazon orders from the past 90 days
-    const orders = await getAmazonOrders(amazonDomain);
+    const orders = await getAmazonOrders(amazonDomain, year);
     let syncCount = 0;
 
     // Process each order
@@ -120,12 +120,17 @@ export async function syncInvoices(amazonDomain, aFolderId) {
  * @param {string} domain The Amazon domain
  * @returns {Promise<Array>} The list of orders
  */
-async function getAmazonOrders(domain) {
+async function getAmazonOrders(domain, year = null) {
+
+  if (!year) {
+    const currentDate = new Date();
+    year = currentDate.getFullYear();
+  }
 
   return new Promise(async (resolve, reject) => {
     try {
       // Generate the orders URL
-      const ordersUrl = `https://www.${domain}/your-orders/orders?timeFilter=year-2021&ref_=ppx_yo2ov_dt_b_filter_all_y2021`;
+      const ordersUrl = `https://www.${domain}/your-orders/orders?timeFilter=year-${year}&ref_=ppx_yo2ov_dt_b_filter_all_y${year}`;
       let tabId = 0;
 
       // Listen for invoice updates from background script
