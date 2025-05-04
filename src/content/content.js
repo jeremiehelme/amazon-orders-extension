@@ -10,7 +10,8 @@ async function extractInvoiceUrls() {
     for (const orderBlock of orderBlocks) {
         const orderDate = orderBlock.querySelector(".order-header .a-fixed-right-grid-col.a-col-left .a-column.a-span4 .a-size-base.a-color-secondary.aok-break-word")?.innerHTML;
         const invoiceId = orderBlock.querySelector(".order-header .yohtmlc-order-id .a-color-secondary:last-child")?.innerHTML;
-
+        const orderAmount = orderBlock.querySelector(".order-header .a-fixed-right-grid-col.a-col-left .a-column.a-span2 .a-size-base.a-color-secondary.aok-break-word")?.innerHTML?.replace('&nbsp;', '');
+        
         // Find the invoice button
         const invoiceButton = orderBlock.querySelector(".order-header__header-link-list-item span[data-action='a-popover'] a");
         // Create a promise that resolves when the popup appears
@@ -85,7 +86,8 @@ async function extractInvoiceUrls() {
                     url: link.href,
                     text: `Invoice ${invoiceId} - ${orderDate}`,
                     invoiceId: invoiceId,
-                    date: orderDate
+                    date: orderDate,
+                    amount: orderAmount,
                 });
                 // Close popup by clicking outside
                 document.body.click();
