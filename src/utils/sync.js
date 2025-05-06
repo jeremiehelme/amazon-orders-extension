@@ -133,34 +133,45 @@ async function getAmazonOrders(domain, year = null) {
       const ordersUrl = `https://www.${domain}/your-orders/orders?timeFilter=year-${year}&ref_=ppx_yo2ov_dt_b_filter_all_y${year}`;
       let tabId = 0;
 
-      // Listen for invoice updates from background script
-      chrome.runtime.onMessage.addListener((message) => {
-        if (message.type === 'FOUND_INVOICES') {
+      // Listen for navigation events
+      chrome.webNavigation.onCompleted.addListener(async (details) => {
+        if (details.url.startsWith('https://www.amazon.fr/ap/signin')) {
+          chrome.runtime.onMessage.removeListener();
+          try {
+            chrome.tabs.update(tabId, { active: true })
+          } catch (error) { }
 
-
-          chrome.tabs.remove(tabId); // Close the tab after processing
-
-
-          const orders = message.invoices.map(order => {
-            let orderDate = parseDateFlexibly(order.date);
-            if (orderDate === null) {
-              orderDate = new Date();
-            }
-            return {
-              id: order.invoiceId,
-              date: format(orderDate, 'dd/MM/yyyy'),
-              amount: order.amount || 'N/A',
-              status: order.status || 'Pending',
-              invoiceUrl: order.url || null,
-              items: order.items || []
-            }
-          });
-
-          return resolve(orders);
+          return resolve([]);
         }
+        // Listen for invoice updates from background script
+        chrome.runtime.onMessage.addListener((message) => {
+          if (message.type === 'FOUND_INVOICES') {
+
+            try {
+              chrome.tabs.remove(tabId); // Close the tab after processing
+            } catch (error) { }
+
+
+            const orders = message.invoices.map(order => {
+              let orderDate = parseDateFlexibly(order.date);
+              if (orderDate === null) {
+                orderDate = new Date();
+              }
+              return {
+                id: order.invoiceId,
+                date: format(orderDate, 'dd/MM/yyyy'),
+                amount: order.amount || 'N/A',
+                status: order.status || 'Pending',
+                invoiceUrl: order.url || null,
+                items: order.items || []
+              }
+            });
+
+            return resolve(orders);
+          }
+        });
       });
 
-      //open chrome tab instead of fetch
       const tab = await chrome.tabs.create({ url: ordersUrl, active: false });
       tabId = tab.id;
 

@@ -484,8 +484,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           details.className = 'invoice-details';
 
           const date = document.createElement('span');
-          date.className = 'invoice-date';
-          console.log('Invoice date:', invoice.date);
+          date.className = 'invoice-date'; 
           date.textContent = invoice.date;
 
           const amount = document.createElement('span');

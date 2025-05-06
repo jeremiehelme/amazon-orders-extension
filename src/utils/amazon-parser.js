@@ -35,7 +35,7 @@ export function extractInvoiceData(document, amazonDomain) {
         '.invoice-link'
       ]
     };
-    
+
     // Helper function to try multiple selectors
     const findElement = (selectorList) => {
       for (const selector of selectorList) {
@@ -44,36 +44,36 @@ export function extractInvoiceData(document, amazonDomain) {
       }
       return null;
     };
-    
+
     // Extract order ID
     const orderIdElement = findElement(selectors.orderId);
     if (!orderIdElement) return null;
     const orderId = orderIdElement.textContent.trim();
-    
+
     // Extract order date
     const orderDateElement = findElement(selectors.orderDate);
     let orderDate = null;
     if (orderDateElement) {
       orderDate = parseDate(orderDateElement.textContent.trim(), amazonDomain);
     }
-    
+
     // Extract total
     const totalElement = findElement(selectors.total);
     let total = null;
     if (totalElement) {
       total = totalElement.textContent.trim();
     }
-    
+
     // Find invoice link
     const invoiceLinkElement = findElement(selectors.invoiceLink);
     let invoiceUrl = null;
     if (invoiceLinkElement && invoiceLinkElement.href) {
       invoiceUrl = invoiceLinkElement.href;
     }
-    
+
     // Extract items
     const items = extractOrderItems(document);
-    
+
     return {
       id: orderId,
       date: orderDate ? orderDate.toISOString() : new Date().toISOString(),
@@ -96,7 +96,7 @@ export function extractInvoiceData(document, amazonDomain) {
  */
 function extractOrderItems(document) {
   const items = [];
-  
+
   try {
     // Different selectors based on the page layout
     const itemContainers = document.querySelectorAll([
@@ -105,7 +105,7 @@ function extractOrderItems(document) {
       '.shipment .a-box',
       '[data-test-id="item-row"]'
     ].join(', '));
-    
+
     itemContainers.forEach(container => {
       // Try different selectors for item name
       const nameElement = container.querySelector([
@@ -114,20 +114,20 @@ function extractOrderItems(document) {
         '.item-title',
         '[data-test-id="item-name"]'
       ].join(', '));
-      
+
       if (!nameElement) return;
-      
+
       const name = nameElement.textContent.trim();
-      
+
       // Try different selectors for item price
       const priceElement = container.querySelector([
         '.item-price',
         '.a-color-price',
         '[data-test-id="item-price"]'
       ].join(', '));
-      
+
       const price = priceElement ? priceElement.textContent.trim() : 'N/A';
-      
+
       items.push({
         name: name,
         price: price
@@ -136,7 +136,7 @@ function extractOrderItems(document) {
   } catch (error) {
     console.error('Error extracting order items:', error);
   }
-  
+
   return items;
 }
 
@@ -149,15 +149,15 @@ function extractOrderItems(document) {
 function parseDate(dateString, domain) {
   // Default to current date if parsing fails
   if (!dateString) return new Date();
-  
+
   try {
     // Remove any extra text around the date
     dateString = dateString.replace(/commandée le/i, '')
-                          .replace(/command[ée]e/i, '')
-                          .replace(/order placed/i, '')
-                          .replace(/on/i, '')
-                          .trim();
-    
+      .replace(/command[ée]e/i, '')
+      .replace(/order placed/i, '')
+      .replace(/on/i, '')
+      .trim();
+
     // Determine locale based on domain
     let locale = 'en-US';
     if (domain.includes('.fr')) locale = 'fr-FR';
@@ -165,10 +165,10 @@ function parseDate(dateString, domain) {
     else if (domain.includes('.it')) locale = 'it-IT';
     else if (domain.includes('.es')) locale = 'es-ES';
     else if (domain.includes('.co.uk')) locale = 'en-GB';
-    
+
     // Use the browser's date parsing with locale hints
     const date = new Date(dateString);
-    
+
     // If that fails, try some manual parsing patterns
     if (isNaN(date.getTime())) {
       // Common date formats by locale
@@ -179,26 +179,26 @@ function parseDate(dateString, domain) {
           const day = parseInt(parts[0], 10);
           const monthStr = parts[1].toLowerCase();
           const year = parseInt(parts[2], 10);
-          
+
           const frenchMonths = [
             'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
             'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
           ];
-          
+
           const month = frenchMonths.findIndex(m => monthStr.includes(m));
-          
+
           if (!isNaN(day) && month !== -1 && !isNaN(year)) {
             return new Date(year, month, day);
           }
         }
       }
-      
+
       // Add more locale-specific parsing as needed
-      
+
       // Last resort: just return current date
       return new Date();
     }
-    
+
     return date;
   } catch (error) {
     console.error('Error parsing date:', error);
@@ -222,7 +222,7 @@ export function isInvoicePage(document) {
     document.querySelector('.printable-invoice-summary'),
     document.querySelector('[data-test-id="order-summary"]')
   ];
-  
+
   return orderElements.some(element => element !== null);
 }
 
@@ -240,14 +240,14 @@ export function extractPdfUrl(document) {
       '.a-link-normal[href*="pdf"]',
       '[data-test-id="invoice-pdf-link"]'
     ];
-    
+
     for (const selector of pdfLinkSelectors) {
       const element = document.querySelector(selector);
       if (element && element.href) {
         return element.href;
       }
     }
-    
+
     return null;
   } catch (error) {
     console.error('Error extracting PDF URL:', error);

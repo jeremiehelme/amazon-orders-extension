@@ -19,7 +19,8 @@
     "storage",
     "alarms",
     "notifications",
-    "identity"
+    "identity",
+    "webNavigation"
   ],
   "host_permissions": [
     "*://*.amazon.com/*",
