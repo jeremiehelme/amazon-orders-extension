@@ -32,57 +32,60 @@ export async function syncInvoices(amazonDomain, aFolderId, year) {
 
     // Process each order
     for (const order of orders) {
-      if (!existingOrderIds.has(order.id)) {
-        // Get the PDF URL if available
-        if (order.invoiceUrl) {
-          try {
+      if (existingOrderIds.has(order.id)) {
+        continue // Skip if already synchronized
+      }
+      // Get the PDF URL if available
+      if (order.invoiceUrl) {
+        try {
 
-            if (order.invoiceUrl) {
-              // Download the PDF
-              const pdfBlob = await fetchPdfFromUrl(order.invoiceUrl);
-
-              // Generate a filename
-              const fileName = `Facture_Amazon_${order.id}.pdf`;
-
-              // Upload to Google Drive
-              const uploadedFile = await uploadPdfToFolder(fileName, pdfBlob, folderId);
-
-              // Save the invoice with success status
-              await saveInvoice({
-                ...order,
-                driveFileId: uploadedFile.id,
-                driveViewLink: uploadedFile.webViewLink,
-                status: 'Success'
-              });
-
-              syncCount++;
-            } else {
-              // No PDF URL found, save the invoice with error status
-              await saveInvoice({
-                ...order,
-                status: 'Error',
-                error: 'PDF non trouvé'
-              });
-            }
-          } catch (error) {
-            console.error('Error processing invoice:', error);
-
-            // Save with error status
+          if (!order.invoiceUrl) {
+            // No PDF URL found, save the invoice with error status
             await saveInvoice({
               ...order,
               status: 'Error',
-              error: error.message
+              error: 'PDF non trouvé'
             });
           }
-        } else {
-          // No invoice URL, save with error status
+
+          // Download the PDF
+          const pdfBlob = await fetchPdfFromUrl(order.invoiceUrl);
+
+          // Generate a filename
+          const fileName = `Facture_Amazon_${order.id}.pdf`;
+
+          // Upload to Google Drive
+          const uploadedFile = await uploadPdfToFolder(fileName, pdfBlob, folderId);
+
+          // Save the invoice with success status
+          await saveInvoice({
+            ...order,
+            driveFileId: uploadedFile.id,
+            driveViewLink: uploadedFile.webViewLink,
+            status: 'Success'
+          });
+
+          syncCount++;
+
+        } catch (error) {
+          console.error('Error processing invoice:', error);
+
+          // Save with error status
           await saveInvoice({
             ...order,
             status: 'Error',
-            error: 'URL de facture non trouvée'
+            error: error.message
           });
         }
+      } else {
+        // No invoice URL, save with error status
+        await saveInvoice({
+          ...order,
+          status: 'Error',
+          error: 'URL de facture non trouvée'
+        });
       }
+
     }
 
     // Create success notification
@@ -196,6 +199,7 @@ export async function getMostRecentInvoices(count) {
     id: invoice.id,
     date: invoice.date,
     amount: invoice.amount || 'N/A',
-    status: invoice.status
+    status: invoice.status,
+    link: invoice.driveViewLink || null,
   }));
 }

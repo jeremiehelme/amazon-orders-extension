@@ -29,11 +29,12 @@ export async function loadConfig() {
         resolve({
           isConfigured: false,
           amazonDomain: 'amazon.fr',
-          autoSync: true,
+          autoSync: false,
           lastSync: null,
           driveFolder: {
             id: null,
-            name: null
+            name: null,
+            url: null
           }
         });
       }

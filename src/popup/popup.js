@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const currentDomainSpan = document.getElementById('current-domain');
   const driveStatusSpan = document.getElementById('drive-status');
   const currentFolderSpan = document.getElementById('current-folder');
+  const linkFolder = document.getElementById('link-folder');
   const lastSyncTimeSpan = document.getElementById('last-sync-time');
   const years = document.getElementById('years');
   const syncNowButton = document.getElementById('sync-now');
@@ -138,6 +139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
           const folderInfo = await getFolderInfo(config.driveFolder.id);
           currentFolderSpan.textContent = folderInfo.name;
+          linkFolder.href = folderInfo.webViewLink;
         } catch (error) {
           console.error('Error getting folder info:', error);
           currentFolderSpan.textContent = 'Erreur';
@@ -341,7 +343,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       lastSync: null,
       driveFolder: {
         id: folderId,
-        name: folderName
+        name: folderName,
+        url: `https://drive.google.com/drive/folders/${folderId}`
       }
     };
 
@@ -355,6 +358,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Update UI with current config
     currentDomainSpan.textContent = config.amazonDomain;
     currentFolderSpan.textContent = config.driveFolder.name;
+    linkFolder.href = config.driveFolder.webViewLink;
     mainAutoSyncToggle.checked = config.autoSync;
 
     hideLoading();
@@ -383,7 +387,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await saveConfig(config);
         updateLastSyncTime();
         await loadRecentInvoices();
-        alert(`Synchronisation réussie! ${result.count} factures ont été synchronisées.`);
+        alert(`Synchronisation réussie! ${result.count} nouvelles factures ont été synchronisées.`);
       } else {
         alert('Échec de la synchronisation: ' + result.error);
       }
@@ -432,7 +436,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       config.amazonDomain = newDomain;
       config.driveFolder = {
         id: newFolderId,
-        name: folderName
+        name: folderName,
+        webViewLink: `https://drive.google.com/drive/folders/${newFolderId}`
       };
 
       await saveConfig(config);
@@ -440,6 +445,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Update UI
       currentDomainSpan.textContent = config.amazonDomain;
       currentFolderSpan.textContent = config.driveFolder.name;
+      linkFolder.href = config.driveFolder.webViewLink;
     }
 
     settingsModal.classList.add('hidden');
@@ -477,14 +483,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         // Add invoices to list
         invoices.forEach(invoice => {
-          const invoiceItem = document.createElement('div');
+          let containerType = 'div';
+          if (invoice.link) {
+            containerType = 'a';
+          }
+          const invoiceItem = document.createElement(containerType);
+          invoiceItem.href = invoice.link;
+          invoiceItem.target = '_blank';
           invoiceItem.className = 'invoice-item';
 
           const details = document.createElement('div');
           details.className = 'invoice-details';
 
           const date = document.createElement('span');
-          date.className = 'invoice-date'; 
+          date.className = 'invoice-date';
           date.textContent = invoice.date;
 
           const amount = document.createElement('span');
@@ -496,7 +508,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           const status = document.createElement('span');
           status.className = `invoice-status status-${invoice.status.toLowerCase()}`;
-          status.textContent = getStatusText(invoice.status);
 
           invoiceItem.appendChild(details);
           invoiceItem.appendChild(status);
@@ -512,20 +523,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Format date and time for display
   function formatDateTime(date) {
     return `${date.toLocaleDateString('fr-FR')} ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
-  }
-
-  // Get status text in French
-  function getStatusText(status) {
-    switch (status.toLowerCase()) {
-      case 'success':
-        return 'Réussi';
-      case 'pending':
-        return 'En cours';
-      case 'error':
-        return 'Erreur';
-      default:
-        return status;
-    }
   }
 
   // Update background sync status

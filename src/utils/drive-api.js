@@ -39,7 +39,7 @@ export async function listDriveFolders() {
   }
   
   const query = `mimeType='${FOLDER_MIME_TYPE}' and trashed=false`;
-  const url = `${API_BASE_URL}/files?q=${encodeURIComponent(query)}&fields=files(id,name)&orderBy=name`;
+  const url = `${API_BASE_URL}/files?q=${encodeURIComponent(query)}&fields=files(id,name,webViewLink)&orderBy=name`;
   
   const response = await fetch(url, {
     headers: {
@@ -98,7 +98,7 @@ export async function getFolderInfo(folderId) {
     throw new Error('Utilisateur non authentifié');
   }
   
-  const url = `${API_BASE_URL}/files/${folderId}?fields=id,name`;
+  const url = `${API_BASE_URL}/files/${folderId}?fields=id,name,webViewLink`;
   
   const response = await fetch(url, {
     headers: {
