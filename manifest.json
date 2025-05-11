@@ -1,15 +1,15 @@
 {
   "manifest_version": 3,
-  "name": "Amazon Factures+",
-  "version": "1.0.0",
-  "description": "Automatically save Amazon invoices to Google Drive",
+  "name": "Invoices+ for Amazon",
+  "version": "1.0.1",
+  "description": "Automatically fetch your Amazon invoices and save them to your Google Drive.",
   "icons": {
     "48": "assets/icon48.png",
     "128": "assets/icon128.png"
   },
   "action": {
     "default_popup": "src/popup/index.html",
-    "default_title": "Amazon Factures+",
+    "default_title": "Invoices+ for Amazon",
     "default_icon": {
       "48": "assets/icon48.png",
       "128": "assets/icon128.png"

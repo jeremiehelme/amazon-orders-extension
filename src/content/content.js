@@ -1,4 +1,4 @@
-console.log('Amazon Factures+ content script loaded');
+console.log('Invoices+ for Amazon content script loaded');
 
 // Function to extract invoice URLs from the page
 async function extractInvoiceUrls() {

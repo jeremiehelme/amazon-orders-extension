@@ -82,7 +82,7 @@ async function handleDailySync() {
     chrome.notifications.create({
       type: 'basic',
       iconUrl: '/assets/icon128.png',
-      title: 'Amazon Factures+',
+      title: 'Invoices+ for Amazon',
       message: `Erreur lors de la synchronisation automatique: ${error.message}`
     });
   }
